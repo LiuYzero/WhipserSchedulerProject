@@ -4,10 +4,13 @@
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 
 import subprocess
+import time
+
 import whisper
 import shutil
 import os
 import psycopg2
+import pyautogui as pag
 
 basePath = "D:/x/WhipserSchedulerProject/"
 
@@ -16,14 +19,90 @@ def print_hi(name):
     print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
 
 def work():
-    filenames = list_mp4_file()
-    for filename in filenames:
-        print (filename)
-        init_temp(basePath + filename)
-        video2audio()
-        audio2captionsV2()
-        save2db(filename)
-        clean_temp()
+    downlaod_videos()
+
+    # filenames = list_mp4_file()
+    # for filename in filenames:
+    #     print (filename)
+    #     init_temp(basePath + filename)
+    #     video2audio()
+    #     audio2captionsV2()
+    #     save2db(filename)
+    #     clean_temp()
+
+def downlaod_videos():
+    find_one_video("https://space.bilibili.com/1447361032/video")
+    download_one_video()
+
+
+def find_one_video(url):
+    open_chrome_tab(url)
+    location_play = pag_locate_pic('pics/play_pic.png')
+    pag_click(location_play[0]+location_play[2]/2,location_play[1]+location_play[3]/2-200)
+    time.sleep(5)
+
+def open_chrome_tab(url):
+    powershell_commands = [
+        "cd D:/x/WhipserSchedulerProject/python/application;./Chrome.lnk "+url
+    ]
+    print(powershell_commands)
+
+    for cmd in powershell_commands:
+        result = subprocess.run(["powershell","-Command", cmd],capture_output=True, text=True)
+        print(f"Command:{cmd}\n")
+        print(result.stdout)
+        print("="*50)
+    time.sleep(5)
+
+def download_one_video():
+    if(download_link_pic()):
+        return True
+    else:
+        if(downloader_pic()):
+            download_link_pic()
+            return True
+    return False
+
+
+
+    # location_pick_up = pag_locate_pic('pics/pick_up_pic.png')
+
+def downloader_pic():
+    location_downloader = pag_locate_pic('pics/downloader_pic.png')
+    if (location_downloader[0] != 0):
+        print("find downloader")
+        pag_click(location_downloader[0] + location_downloader[2] / 2,
+                  location_downloader[1] + location_downloader[3] / 2)
+        time.sleep(3)
+        return True
+    return False
+
+def download_link_pic():
+    location_download_link = pag_locate_pic('pics/download_link_pic.png')
+    if (location_download_link[0] != 0):
+        pag_click(location_download_link[0] + location_download_link[2] / 2 + 40,
+                  location_download_link[1] + location_download_link[3] / 2)
+        return True
+    return False
+
+def pag_click(x,y):
+    pag.moveTo(x,y)
+    time.sleep(1)
+    pag.click()
+    time.sleep(1)
+
+
+def pag_locate_pic(pic):
+    """"
+    download_link(896,1194)
+    """
+    try:
+        box =  pag.locateOnScreen(pic)
+        print (box)
+        return (box[0],box[1],box[2],box[3])
+    except Exception as e:
+        print ((0,0,0,0))
+        return (0,0,0,0)
 
 def list_mp4_file():
     mp4_files = []
@@ -31,6 +110,7 @@ def list_mp4_file():
         if(filename.endswith(".mp4")):
             mp4_files.append(filename)
     return mp4_files
+
 def init_temp(video_path):
     clean_temp()
     temp_path = basePath+"temp"
@@ -68,7 +148,7 @@ def audio2catpions():
 def audio2captionsV2():
     tempPath = basePath + "temp"
     powershell_commands = [
-        "cd "+tempPath+";whisper --model base --language Chinese sample.mp3"
+        "cd "+tempPath+";whisper --model medium --language Chinese sample.mp3"
     ]
     print (powershell_commands)
 
