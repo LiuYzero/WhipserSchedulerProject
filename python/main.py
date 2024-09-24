@@ -19,21 +19,30 @@ def print_hi(name):
     print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
 
 def work():
-    downlaod_videos()
+    # downlaod_videos()
 
-    # filenames = list_mp4_file()
-    # for filename in filenames:
-    #     print (filename)
-    #     init_temp(basePath + filename)
-    #     video2audio()
-    #     audio2captionsV2()
-    #     save2db(filename)
-    #     clean_temp()
+    filenames = list_mp4_file()
+    for filename in filenames:
+        print (filename)
+        init_temp(basePath + filename)
+        video2audio()
+        audio2captionsV2()
+        save2db(filename)
+        clean_temp()
 
 def downlaod_videos():
-    find_one_video("https://space.bilibili.com/1447361032/video")
-    download_one_video()
+    for space_url in get_space_urls():
+        print (space_url)
+        find_one_video(space_url)
+        download_one_video()
 
+def get_space_urls():
+    space_list = []
+    space_file_path = basePath+"python/b_station_spaces.txt"
+    with open(space_file_path, 'r', errors='ignore') as space_file:
+        space_list = space_file.readlines()
+    print (space_list)
+    return space_list
 
 def find_one_video(url):
     open_chrome_tab(url)
@@ -82,6 +91,9 @@ def download_link_pic():
     if (location_download_link[0] != 0):
         pag_click(location_download_link[0] + location_download_link[2] / 2 + 40,
                   location_download_link[1] + location_download_link[3] / 2)
+        print ("sleep 30 seconds")
+        time.sleep(30)
+
         return True
     return False
 
