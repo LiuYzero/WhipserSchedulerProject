@@ -53,6 +53,7 @@ def move_videos():
 
 def downlaod_videos():
     for space_url in get_space_urls():
+        print("==========================================")
         print (space_url)
         find_one_video(space_url)
         download_one_video()
@@ -88,6 +89,7 @@ def open_chrome_tab(url):
 
 
 def close_chrome(url):
+    print("==========================================")
     powershell_commands = [
         "taskkill /F /IM chrome.exe /T"
     ]
@@ -143,6 +145,7 @@ def pag_click(x,y):
 
 def pag_locate_pic(pic):
     """"
+    chrome in 2k scale 125%
     download_link(896,1194)
     """
     try:
