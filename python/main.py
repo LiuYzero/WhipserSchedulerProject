@@ -11,6 +11,7 @@ import shutil
 import os
 import psycopg2
 import pyautogui as pag
+from minio import Minio
 
 basePath = "D:/x/WhipserSchedulerProject/"
 
@@ -19,7 +20,9 @@ def print_hi(name):
     print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
 
 def work():
-    # downlaod_videos()
+    downlaod_videos()
+
+    move_videos()
 
     filenames = list_mp4_file()
     for filename in filenames:
@@ -30,11 +33,31 @@ def work():
         save2db(filename)
         clean_temp()
 
+def move_videos():
+    print ("move videos")
+    source_path = "C:/Users/LiuYang/Downloads"
+    files = os.listdir(source_path)
+
+    for tmpFile in files:
+        if tmpFile.endswith(".mp4"):
+            print("==========================================")
+            print (tmpFile)
+            if(query_filename_from_db(tmp_file=tmpFile)) == 0:
+                print ("will move it")
+                shutil.move(source_path+"/"+tmpFile, basePath)
+                upload_file(minio_file=tmpFile)
+            else:
+                print("will rm it")
+                os.remove(source_path + "/" + tmpFile)
+
+
 def downlaod_videos():
     for space_url in get_space_urls():
         print (space_url)
         find_one_video(space_url)
         download_one_video()
+
+    close_chrome()
 
 def get_space_urls():
     space_list = []
@@ -53,6 +76,20 @@ def find_one_video(url):
 def open_chrome_tab(url):
     powershell_commands = [
         "cd D:/x/WhipserSchedulerProject/python/application;./Chrome.lnk "+url
+    ]
+    print(powershell_commands)
+
+    for cmd in powershell_commands:
+        result = subprocess.run(["powershell","-Command", cmd],capture_output=True, text=True)
+        print(f"Command:{cmd}\n")
+        print(result.stdout)
+        print("="*50)
+    time.sleep(5)
+
+
+def close_chrome(url):
+    powershell_commands = [
+        "taskkill /F /IM chrome.exe /T"
     ]
     print(powershell_commands)
 
@@ -222,6 +259,41 @@ def save2db(filename):
             conn.commit()
             conn.close()
 
+def query_filename_from_db(tmp_file):
+    result_size = 0
+    conn = None
+    try:
+        conn = psycopg2.connect(database='db_paas', user='paas', password='paas', host='192.168.1.110', port='5432')
+        cur = conn.cursor()
+        select_sql = 'select video from public.video_caption where video = \'%s\'' % (tmp_file)
+        print (select_sql)
+        cur.execute(select_sql)
+        rows = cur.fetchall()
+        result_size = len(rows)
+        cur.close()
+    except psycopg2.DatabaseError as e:
+        print (e)
+        None
+    finally:
+        if conn:
+            conn.commit()
+            conn.close()
+    print (result_size)
+    return result_size
+
+
+def upload_file(minio_file):
+    minio_client = Minio(
+        '192.168.1.113:9000',
+        access_key='aiVQtdmzTrg8ijR9iBvC',
+        secret_key='lVWr51xizRNGqssQnKamKXIZxsVI3hdXHtPyNZzQ',
+        secure=False
+    )
+    bucket_name = "caption-video"
+
+    source_file_path = basePath+minio_file
+    print ("source file path {}".format(source_file_path))
+    minio_client.fput_object(bucket_name=bucket_name, object_name="{}".format(minio_file),file_path=basePath+minio_file)
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
