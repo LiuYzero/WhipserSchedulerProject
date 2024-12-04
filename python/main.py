@@ -6,6 +6,8 @@
 import subprocess
 import time
 
+import pyperclip
+
 import whisper
 import shutil
 import os
@@ -27,11 +29,13 @@ def work():
     filenames = list_mp4_file()
     for filename in filenames:
         print (filename)
+        upload_file(minio_file=filename)
         init_temp(basePath + filename)
         video2audio()
         audio2captionsV2()
         save2db(filename)
         clean_temp()
+        time.sleep(120)
 
 def move_videos():
     print ("move videos")
@@ -44,21 +48,35 @@ def move_videos():
             print (tmpFile)
             if(query_filename_from_db(tmp_file=tmpFile)) == 0:
                 print ("will move it")
-                shutil.move(source_path+"/"+tmpFile, basePath)
-                upload_file(minio_file=tmpFile)
+                try:
+                    shutil.move(source_path+"/"+tmpFile, basePath)
+                except:
+                    None
             else:
                 print("will rm it")
                 os.remove(source_path + "/" + tmpFile)
 
 
 def downlaod_videos():
+    downloaded_urls = get_downloaded_url()
     for space_url in get_space_urls():
         print("==========================================")
         print (space_url)
         find_one_video(space_url)
-        download_one_video()
+
+        pag.hotkey('ctrl','l')
+        time.sleep(1)
+        pag.hotkey('ctrl','c')
+        time.sleep(1)
+        current_url = pyperclip.paste()
+        print ("current_url "+current_url)
+        if current_url not in downloaded_urls:
+            downloaded_urls.append(current_url)
+            print ("new video, will download")
+            download_one_video()
 
     close_chrome()
+    write_downloaded_url(downloaded_urls)
 
 def get_space_urls():
     space_list = []
@@ -68,11 +86,30 @@ def get_space_urls():
     print (space_list)
     return space_list
 
+def get_downloaded_url():
+    tmp_list = []
+    downloaded_list = []
+    downloaded_file_path = basePath + "python/b_station_downloaded.txt"
+    with open(downloaded_file_path, 'r', errors='ignore') as downloaded_file:
+        tmp_list = downloaded_file.readlines()
+
+    for url in tmp_list:
+        downloaded_list.append(url.replace("\n",""))
+
+    print(downloaded_list)
+    return downloaded_list
+
+def write_downloaded_url(downloaded_list):
+    downloaded_file_path = basePath + "python/b_station_downloaded.txt"
+    with open(downloaded_file_path, 'w', errors='ignore') as downloaded_file:
+        for url in downloaded_list:
+            downloaded_file.write(url+"\r")
+
 def find_one_video(url):
     open_chrome_tab(url)
     location_play = pag_locate_pic('pics/play_pic.png')
     pag_click(location_play[0]+location_play[2]/2,location_play[1]+location_play[3]/2-200)
-    time.sleep(5)
+    time.sleep(10)
 
 def open_chrome_tab(url):
     powershell_commands = [
@@ -88,7 +125,7 @@ def open_chrome_tab(url):
     time.sleep(5)
 
 
-def close_chrome(url):
+def close_chrome():
     print("==========================================")
     powershell_commands = [
         "taskkill /F /IM chrome.exe /T"
@@ -116,6 +153,7 @@ def download_one_video():
     # location_pick_up = pag_locate_pic('pics/pick_up_pic.png')
 
 def downloader_pic():
+    print("try to find download_pic")
     location_downloader = pag_locate_pic('pics/downloader_pic.png')
     if (location_downloader[0] != 0):
         print("find downloader")
@@ -126,6 +164,7 @@ def downloader_pic():
     return False
 
 def download_link_pic():
+    print ("try to find download_link")
     location_download_link = pag_locate_pic('pics/download_link_pic.png')
     if (location_download_link[0] != 0):
         pag_click(location_download_link[0] + location_download_link[2] / 2 + 40,
@@ -145,7 +184,6 @@ def pag_click(x,y):
 
 def pag_locate_pic(pic):
     """"
-    chrome in 2k scale 125%
     download_link(896,1194)
     """
     try:
@@ -286,10 +324,17 @@ def query_filename_from_db(tmp_file):
 
 
 def upload_file(minio_file):
+    # minio_client = Minio(
+    #     '192.168.1.113:9000',
+    #     access_key='aiVQtdmzTrg8ijR9iBvC',
+    #     secret_key='lVWr51xizRNGqssQnKamKXIZxsVI3hdXHtPyNZzQ',
+    #     secure=False
+    # )
+
     minio_client = Minio(
-        '192.168.1.113:9000',
-        access_key='aiVQtdmzTrg8ijR9iBvC',
-        secret_key='lVWr51xizRNGqssQnKamKXIZxsVI3hdXHtPyNZzQ',
+        '192.168.1.107:9000',
+        access_key='qBPz2OTL3ExDazb2L2uV',
+        secret_key='qz4RoRiEfVFyBdya72OdzrRNUsuTdw9Vc8Vsg5Tw',
         secure=False
     )
     bucket_name = "caption-video"
