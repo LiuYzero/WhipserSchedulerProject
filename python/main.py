@@ -32,6 +32,7 @@ def work():
         upload_file(minio_file=filename)
         init_temp(basePath + filename)
         video2audio()
+        # audio2catpions()
         audio2captionsV2()
         save2db(filename)
         clean_temp()
@@ -107,8 +108,11 @@ def write_downloaded_url(downloaded_list):
 
 def find_one_video(url):
     open_chrome_tab(url)
+    location_list = pag_locate_pic('pics/list_type.png')
+    pag_click(location_list[0] + location_list[2] / 2, location_list[1] + location_list[3] / 2 )
+    time.sleep(2)
     location_play = pag_locate_pic('pics/play_pic.png')
-    pag_click(location_play[0]+location_play[2]/2,location_play[1]+location_play[3]/2-200)
+    pag_click(location_play[0]+location_play[2]/2-200,location_play[1]+location_play[3]/2)
     time.sleep(10)
 
 def open_chrome_tab(url):
