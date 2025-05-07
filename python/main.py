@@ -22,9 +22,9 @@ def print_hi(name):
     print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
 
 def work():
-    downlaod_videos()
-
-    move_videos()
+    # downlaod_videos()
+    #
+    # move_videos()
 
     filenames = list_mp4_file()
     for filename in filenames:
@@ -282,9 +282,15 @@ def write2file(captions):
 def save2db(filename):
     captions = []
     filePath = basePath + "temp/whisper_captions.txt"
-    with open(filePath,"r", encoding="utf-8") as caption_file:
-       for line in caption_file:
-           captions.append(line.replace("\n",""))
+    try:
+        with open(filePath,"r", encoding="utf-8") as caption_file:
+           for line in caption_file:
+               captions.append(line.replace("\n",""))
+    except UnicodeDecodeError:
+        print ("use gbk")
+        with open(filePath, "r", encoding="gbk") as caption_file:
+            for line in caption_file:
+                captions.append(line.replace("\n", ""))
     conn = None
     try:
         conn = psycopg2.connect(database='db_paas', user='paas', password='paas', host='192.168.1.110', port='5432')
