@@ -22,9 +22,9 @@ def print_hi(name):
     print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
 
 def work():
-    # downlaod_videos()
-    #
-    # move_videos()
+    downlaod_videos()
+
+    move_videos()
 
     filenames = list_mp4_file()
     for filename in filenames:
@@ -76,6 +76,7 @@ def downlaod_videos():
             print ("new video, will download")
             download_one_video()
 
+
     close_chrome()
     write_downloaded_url(downloaded_urls)
 
@@ -109,11 +110,10 @@ def write_downloaded_url(downloaded_list):
 def find_one_video(url):
     open_chrome_tab(url)
     location_list = pag_locate_pic('pics/list_type.png')
-    pag_click(location_list[0] + location_list[2] / 2, location_list[1] + location_list[3] / 2 )
-    time.sleep(2)
-    location_play = pag_locate_pic('pics/play_pic.png')
-    pag_click(location_play[0]+location_play[2]/2-200,location_play[1]+location_play[3]/2)
-    time.sleep(10)
+    pag_click(location_list[0] + 30, location_list[1]+200)
+    print("one video")
+    time.sleep(5)
+
 
 def open_chrome_tab(url):
     powershell_commands = [
@@ -173,11 +173,38 @@ def download_link_pic():
     if (location_download_link[0] != 0):
         pag_click(location_download_link[0] + location_download_link[2] / 2 + 40,
                   location_download_link[1] + location_download_link[3] / 2)
-        print ("sleep 30 seconds")
-        time.sleep(30)
+
+        # 监控文件数量判断视频是否下载完毕
+        monitor_downloads_directory()
 
         return True
     return False
+
+
+def monitor_downloads_directory():
+    directory = r'C:\Users\LiuYang\Downloads'
+    max_duration = 60  # 最大运行时间（秒）
+    interval = 2  # 检查间隔（秒）
+
+    start_time = time.time()
+    initial_file_count = len(os.listdir(directory))
+
+    while True:
+        # 检查是否超过最大运行时间
+        if time.time() - start_time > max_duration:
+            print(f"已达到最大运行时间 {max_duration} 秒，退出监控。")
+            break
+
+        # 获取当前文件数量
+        current_file_count = len(os.listdir(directory))
+
+        # 检查文件数量是否变化
+        if current_file_count != initial_file_count:
+            print(f"文件数量已变化（原数量: {initial_file_count}, 现数量: {current_file_count}），退出监控。")
+            break
+
+        # 等待间隔时间
+        time.sleep(interval)
 
 def pag_click(x,y):
     pag.moveTo(x,y)
