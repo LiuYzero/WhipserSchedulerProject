@@ -75,6 +75,8 @@ def downlaod_videos():
             downloaded_urls.append(current_url)
             print ("new video, will download")
             download_one_video()
+        else :
+            print ("old video, will do nothing")
 
 
     close_chrome()
